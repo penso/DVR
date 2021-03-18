@@ -213,7 +213,7 @@ open class Session: URLSession {
 
 
         do {
-            let outputPath = ((outputDirectory as NSString).appendingPathComponent(cassetteName) as NSString).appendingPathExtension("json")!
+            var outputPath = ((outputDirectory as NSString).appendingPathComponent(cassetteName) as NSString).appendingPathExtension("json")!
             let data = try JSONSerialization.data(withJSONObject: cassette.dictionary, options: [.prettyPrinted])
 
             // Add trailing new line
@@ -224,14 +224,22 @@ open class Session: URLSession {
             string = string.appending("\n") as NSString
 
             if let data = string.data(using: String.Encoding.utf8.rawValue) {
-                try? data.write(to: URL(fileURLWithPath: outputPath), options: [.atomic])
+                try data.write(to: URL(fileURLWithPath: outputPath), options: [.atomic])
+
+                let url = URL(fileURLWithPath: outputPath)
+                if #available(OSX 10.12, *) {
+                    if let fullPath = try url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath {
+                        outputPath = fullPath
+                    }
+                }
+
                 print("[DVR] Persisted cassette at \(outputPath). Please add this file to your test target")
                 return
             }
 
             print("[DVR] Failed to persist cassette.")
         } catch {
-            print("[DVR] Failed to persist cassette.")
+            print("[DVR] Failed to persist cassette: \(error)")
         }
     }
 
