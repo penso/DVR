@@ -12,7 +12,7 @@ open class Session: URLSession {
     public let cassetteName: String
     public let backingSession: URLSession
     open var recordingEnabled = true
-
+    open var abortOnPersist = true
     private let testBundle: Bundle
 
     private var recording = false
@@ -192,8 +192,10 @@ open class Session: URLSession {
     }
 
     private func persist(_ interactions: [Interaction]) {
-        defer {
-            abort()
+        if abortOnPersist {
+            defer {
+                abort()
+            }
         }
 
         // Create directory
