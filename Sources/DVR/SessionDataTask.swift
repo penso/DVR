@@ -56,7 +56,7 @@ final class SessionDataTask: URLSessionDataTask {
         }
 
         if cassette != nil {
-            fatalError("[DVR] Invalid request. The request was not found in the cassette.")
+            fatalError("[DVR] Invalid request. The request was not found in the cassette: \(session.outputPath)")
         }
 
         // Cassette is missing. Record.

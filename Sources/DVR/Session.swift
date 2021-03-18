@@ -25,6 +25,19 @@ open class Session: URLSession {
         return backingSession.delegate
     }
 
+    var outputPath: String {
+        var result = ((outputDirectory as NSString).appendingPathComponent(cassetteName) as NSString).appendingPathExtension("json")!
+
+        let url = URL(fileURLWithPath: result)
+        if #available(OSX 10.12, *) {
+            if let fullPath = try? url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath {
+                result = fullPath
+            }
+        }
+
+        return result
+    }
+
     // MARK: - Initializers
 
     public init(outputDirectory: String = "~/Desktop/DVR/", cassetteName: String, testBundle: Bundle = Session.defaultTestBundle!, backingSession: URLSession = URLSession.shared) {
@@ -192,8 +205,8 @@ open class Session: URLSession {
     }
 
     private func persist(_ interactions: [Interaction]) {
-        if abortOnPersist {
-            defer {
+        defer {
+            if abortOnPersist {
                 abort()
             }
         }
@@ -212,10 +225,7 @@ open class Session: URLSession {
         let cassette = Cassette(name: cassetteName, interactions: interactions)
 
         // Persist
-
-
         do {
-            var outputPath = ((outputDirectory as NSString).appendingPathComponent(cassetteName) as NSString).appendingPathExtension("json")!
             let data = try JSONSerialization.data(withJSONObject: cassette.dictionary, options: [.prettyPrinted])
 
             // Add trailing new line
@@ -227,13 +237,6 @@ open class Session: URLSession {
 
             if let data = string.data(using: String.Encoding.utf8.rawValue) {
                 try data.write(to: URL(fileURLWithPath: outputPath), options: [.atomic])
-
-                let url = URL(fileURLWithPath: outputPath)
-                if #available(OSX 10.12, *) {
-                    if let fullPath = try url.resourceValues(forKeys: [.canonicalPathKey]).canonicalPath {
-                        outputPath = fullPath
-                    }
-                }
 
                 print("[DVR] Persisted cassette at \(outputPath). Please add this file to your test target")
                 return
